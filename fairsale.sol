@@ -1,4 +1,4 @@
-pragma solidity 0.4.2;
+pragma solidity 0.4.4;
 
 contract Fairsale {
     address public owner;
@@ -9,16 +9,22 @@ contract Fairsale {
     mapping(address => uint) public balances;
     mapping(address => bool) public refunded;
 
-    function Fairsale(uint _blocks, uint _target) {
+    event TargetHit(uint amountRaised);
+    event CrowdsaleClosed(uint amountRaised);
+    event FundTransfer(address backer, uint amount);
+    event Refunded(address backer, uint amount);
+
+    function BrancheProportionalCrowdsale(uint _durationInMinutes, uint _targetETH) {
         owner = msg.sender;
-        finalblock = block.number + _blocks;
-        target = _target;
+        deadline = now + _durationInMinutes * 1 minutes;
+        target = _targetETH * 1 ether;
     }
 
     function _deposit() private {
-        if (block.number > finalblock) throw;
+        if (now >= deadline) throw;
         balances[msg.sender] += msg.value;
         raised += msg.value;
+        FundTransfer(msg.sender, msg.value);
     }
 
     function deposit() payable {
@@ -30,7 +36,7 @@ contract Fairsale {
     }
 
     function withdrawRefund() {
-        if (block.number <= finalblock) throw;
+        if (now <= deadline) throw;
         if (raised <= target) throw;
         if (refunded[msg.sender]) throw;
 
@@ -40,6 +46,7 @@ contract Fairsale {
         if (refund > this.balance) refund = this.balance;
 
         refunded[msg.sender] = true;
+        Refunded(msg.sender, refund);
         if (!msg.sender.call.value(refund)()) throw;
     }
 
@@ -47,10 +54,12 @@ contract Fairsale {
         if (block.number <= finalblock) throw;
         if (funded) throw;
         funded = true;
+        CrowdsaleClosed(raised);
         if (raised < target) {
             if (raised > this.balance) raised = this.balance;
             if (!owner.call.value(raised)()) throw;
         } else {
+            TargetHit(raised);
             if (target > this.balance) target = this.balance;
             if (!owner.call.value(target)()) throw;
         }
