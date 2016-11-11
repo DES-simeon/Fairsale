@@ -1,4 +1,4 @@
-pragma solidity 0.4.4;
+pragma solidity ^0.4.4;
 
 contract Fairsale {
     address public owner;
@@ -55,7 +55,7 @@ contract Fairsale {
         if (!recipient.call.value(refund)()) throw;
     }
 
-    function adminRefund(address, deposit_addr, address recipient) {
+    function adminRefund(address deposit_addr, address recipient) {
         if (msg.sender != owner) throw;
         if (now <= deadline) throw;
         if (balances[recipient]==0) throw;
@@ -71,7 +71,7 @@ contract Fairsale {
     }
 
     function fundOwner() {
-        if (block.number <= finalblock) throw;
+        if (now <= deadline) throw;
         if (funded) throw;
         funded = true;
         CrowdsaleClosed(raised);
