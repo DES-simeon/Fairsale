@@ -1,6 +1,6 @@
 pragma solidity ^0.4.4;
 
-contract Fairsale {
+contract BrancheProportionalCrowdsale {
     address public owner;
     uint public deadline;
     uint public adminRefundDate;
@@ -58,7 +58,7 @@ contract Fairsale {
     function adminRefund(address deposit_addr, address recipient) {
         if (msg.sender != owner) throw;
         if (now <= deadline) throw;
-        if (balances[recipient]==0) throw;
+        if (balances[recipient]!=0) throw;
         balances[recipient] = balances[deposit_addr];
         refunded[deposit_addr] = true;
         refund(recipient);
